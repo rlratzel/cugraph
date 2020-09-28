@@ -80,7 +80,7 @@ def louvain(input_graph, max_iter=100, resolution=1.0, load_balance=True):
     # vertex_partition_segment_offsets needed for constructing a 2D
     # graph/graph_view later.
     input_graph.compute_renumber_edge_list(transposed=False)
-    ddf = shuffle(input_graph, transposed=False)
+    ddf, num_verts, vertex_partition_offsets = shuffle(input_graph, transposed=False)
     data = get_distributed_data(ddf)
     comms = Comms.get_comms()
 
