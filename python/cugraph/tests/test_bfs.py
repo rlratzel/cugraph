@@ -45,8 +45,6 @@ from scipy.sparse.csc import csc_matrix as sp_csc_matrix
 # =============================================================================
 # Parameters
 # =============================================================================
-DIRECTED_GRAPH_OPTIONS = [True, False]
-
 SUBSET_SEED_OPTIONS = [42]
 
 DEFAULT_EPSILON = 1e-6
@@ -350,9 +348,6 @@ def get_nx_results_and_params(seed, use_spc, dataset, directed, Gnx):
 # Pytest Fixtures
 # =============================================================================
 SEEDS = [pytest.param(s) for s in SUBSET_SEED_OPTIONS]
-DIRECTED = [pytest.param(d) for d in DIRECTED_GRAPH_OPTIONS]
-DATASETS = [pytest.param(d) for d in utils.DATASETS]
-DATASETS_SMALL = [pytest.param(d) for d in utils.DATASETS_SMALL]
 USE_SHORTEST_PATH_COUNTER = [pytest.param(False), pytest.param(True)]
 
 # Call genFixtureParamsProduct() to caluculate the cartesian product of
@@ -363,14 +358,6 @@ USE_SHORTEST_PATH_COUNTER = [pytest.param(False), pytest.param(True)]
 algo_test_fixture_params = utils.genFixtureParamsProduct(
     (SEEDS, "seed"),
     (USE_SHORTEST_PATH_COUNTER, "spc"))
-
-graph_fixture_params = utils.genFixtureParamsProduct(
-    (DATASETS, "ds"),
-    (DIRECTED, "dirctd"))
-
-small_graph_fixture_params = utils.genFixtureParamsProduct(
-    (DATASETS_SMALL, "ds"),
-    (DIRECTED, "dirctd"))
 
 # The single param list variants are used when only 1 param combination is
 # needed (eg. testing non-native input types where tests for other combinations
@@ -387,16 +374,6 @@ single_small_graph_fixture_params = utils.genFixtureParamsProduct(
 # Fixtures that result in a test-per (dataset X directed/undirected)
 # combination. These return the path to the dataset, a bool indicating if a
 # directed graph is being used, and the Nx graph object.
-@pytest.fixture(scope="module", params=graph_fixture_params)
-def dataset_nx_graph(request):
-    return get_nx_graph_and_params(*request.param)
-
-
-@pytest.fixture(scope="module", params=small_graph_fixture_params)
-def small_dataset_nx_graph(request):
-    return get_nx_graph_and_params(*request.param)
-
-
 @pytest.fixture(scope="module", params=single_small_graph_fixture_params)
 def single_small_dataset_nx_graph(request):
     return get_nx_graph_and_params(*request.param)
