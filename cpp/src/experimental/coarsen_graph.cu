@@ -120,10 +120,6 @@ void sort_and_coarsen_edgelist(rmm::device_uvector<vertex_t> &edgelist_major_ver
       tmp_edgelist_weights.begin());
     number_of_edges = thrust::distance(tmp_edgelist_weights.begin(), thrust::get<1>(it));
 
-    CUDA_TRY(cudaStreamSynchronize(
-      stream));  // memory blocks owned by edgelist_(major_vertices,minor_vertices,weights) will be
-                 // freed after the assignments below
-
     edgelist_major_vertices = std::move(tmp_edgelist_major_vertices);
     edgelist_minor_vertices = std::move(tmp_edgelist_minor_vertices);
     edgelist_weights        = std::move(tmp_edgelist_weights);
@@ -313,10 +309,6 @@ coarsen_graph(
                    src_edge_first + edgelist_major_vertices.size(),
                    dst_edge_first);
     }
-
-    CUDA_TRY(cudaStreamSynchronize(
-      handle.get_stream()));  // edgelist_(major_vertices,minor_vertices,weights)
-                              // will become out-of-scope
   }
 
   sort_and_coarsen_edgelist(coarsened_edgelist_major_vertices,
@@ -354,11 +346,6 @@ coarsen_graph(
                               rx_edgelist_minor_vertices,
                               rx_edgelist_weights,
                               handle.get_stream());
-
-    CUDA_TRY(cudaStreamSynchronize(
-      handle.get_stream()));  // memory blocks owned by
-                              // coarsened_edgelist_(major_vertices,minor_vertices,weights)
-                              // will be freed after the assignments below
 
     coarsened_edgelist_major_vertices = std::move(rx_edgelist_major_vertices);
     coarsened_edgelist_minor_vertices = std::move(rx_edgelist_minor_vertices);
@@ -407,8 +394,12 @@ coarsen_graph(
   // 4. renumber
 
   rmm::device_uvector<vertex_t> renumber_map_labels(0, handle.get_stream());
-  partition_t<vertex_t> partition(
-    std::vector<vertex_t>{}, graph_view.is_hypergraph_partitioned(), 0, 0, 0, 0);
+  partition_t<vertex_t> partition(std::vector<vertex_t>(comm_size + 1, 0),
+                                  graph_view.is_hypergraph_partitioned(),
+                                  row_comm_size,
+                                  col_comm_size,
+                                  row_comm_rank,
+                                  col_comm_rank);
   vertex_t number_of_vertices{};
   edge_t number_of_edges{};
   std::tie(renumber_map_labels, partition, number_of_vertices, number_of_edges) =

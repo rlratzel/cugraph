@@ -238,9 +238,9 @@ graph_t<vertex_t, edge_t, weight_t, store_transposed, multi_gpu, std::enable_if_
     }
     number_of_local_edges_sum =
       host_scalar_allreduce(comm, number_of_local_edges_sum, default_stream);
-    CUGRAPH_EXPECTS(number_of_local_edges_sum == this->get_number_of_edges(),
-                    "Invalid input argument: the sum of local edges doe counts not match with "
-                    "number_of_local_edges.");
+    CUGRAPH_EXPECTS(
+      number_of_local_edges_sum == this->get_number_of_edges(),
+      "Invalid input argument: the sum of local edge counts does not match with number_of_edges.");
 
     CUGRAPH_EXPECTS(
       partition.get_vertex_partition_last(comm_size - 1) == number_of_vertices,
@@ -470,9 +470,7 @@ graph_t<vertex_t, edge_t, weight_t, store_transposed, multi_gpu, std::enable_if_
       segment_offsets_.data(), segment_offsets.data(), segment_offsets.size(), default_stream);
 
     CUDA_TRY(cudaStreamSynchronize(
-      default_stream));  // this is necessary as d_thresholds and segment_offsets will become
-                         // out-of-scpe once control flow exits this block and segment_offsets_ can
-                         // be used right after return.
+      default_stream));  // this is necessary as segment_offsets_ can be used right after return.
   }
 
   // optional expensive checks (part 3/3)
