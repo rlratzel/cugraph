@@ -56,6 +56,7 @@ DATASETS_UNRENUMBERED = [PurePath(
 ]
 
 DATASETS = [PurePath(RAPIDS_DATASET_ROOT_DIR)/f for f in [
+    #"email-Eu-core.csv",
     "karate-disjoint.csv",
     "dolphins.csv",
     "netscience.csv"]
@@ -75,9 +76,6 @@ DATASETS_SELF_LOOPS = [PurePath(RAPIDS_DATASET_ROOT_DIR)/f for f in [
     "karate_s_loop.csv",
     "dolphins_s_loop.csv"]
 ]
-
-
-#            '../datasets/email-Eu-core.csv']
 
 STRONGDATASETS = [
     PurePath(RAPIDS_DATASET_ROOT_DIR)/f for f in [
@@ -107,8 +105,21 @@ DATASETS_SMALL = [
         "polbooks.csv"]
 ]
 
+CUGRAPH_INPUT_TYPES = [
+    pytest.param(
+        cugraph.Graph, marks=pytest.mark.cugraph_types, id="cugraph.Graph"
+    ),
+    pytest.param(
+        cugraph.DiGraph, marks=pytest.mark.cugraph_types, id="cugraph.DiGraph"
+    ),
+]
 
-MATRIX_INPUT_TYPES = [
+NX_INPUT_TYPES = [
+    pytest.param(nx.Graph, marks=pytest.mark.nx_types, id="nx.Graph"),
+    pytest.param(nx.Graph, marks=pytest.mark.nx_types, id="nx.DiGraph"),
+]
+
+CUPY_INPUT_TYPES = [
     pytest.param(
         cp_coo_matrix, marks=pytest.mark.matrix_types, id="CuPy.coo_matrix"
     ),
@@ -120,26 +131,7 @@ MATRIX_INPUT_TYPES = [
     ),
 ]
 
-NX_INPUT_TYPES = [
-    pytest.param(nx.Graph, marks=pytest.mark.nx_types, id="nx.Graph"),
-]
-
-NX_DIR_INPUT_TYPES = [
-    pytest.param(nx.Graph, marks=pytest.mark.nx_types, id="nx.DiGraph"),
-]
-
-CUGRAPH_INPUT_TYPES = [
-    pytest.param(
-        cugraph.Graph, marks=pytest.mark.cugraph_types, id="cugraph.Graph"
-    ),
-]
-
-CUGRAPH_DIR_INPUT_TYPES = [
-    pytest.param(
-        cugraph.DiGraph, marks=pytest.mark.cugraph_types, id="cugraph.DiGraph"
-    ),
-]
-
+MATRIX_INPUT_TYPES=CUPY_INPUT_TYPES
 
 def read_csv_for_nx(csv_file, read_weights_in_sp=True, read_weights=True):
     print("Reading " + str(csv_file) + "...")

@@ -437,8 +437,42 @@ def dataset_nxresults_allstartvertices_spc(small_dataset_nx_graph):
     return (dataset, directed, all_nx_values, start_vertices, use_spc)
 
 
+####################################
+_nx_results = {}
+def get_nx_bfs_results(dataset_path, directed):
+    result_tuple = _nx_results.get((dataset_path, directed))
+    if result_tuple is None:
+        Gnx = utils.generate_nx_graph_from_file(dataset_path, directed)
+        random.seed(42)
+        start_vertex = random.sample(Gnx.nodes(), 1)[0]
+        print(f"NX: {dataset_path}, sv: {start_vertex}\n")
+        values = nx.single_source_shortest_path_length(Gnx, start_vertex)
+        result_tuple = (values, start_vertex)
+        _nx_results[(dataset_path, directed)] = result_tuple
+    else:
+        print("REUSED\n")
+    return result_tuple
+
+
+def compare_result(cu_values, nx_values):
+    #cugraph_df = convert_output_to_cudf(G, result)
+    return True
+
+
+
+def test_bfs2(gpubenchmark, graph_input_data):
+    (graph_like_obj, directed, dataset_path) = graph_input_data
+
+    (nx_values, start_vertex) = get_nx_bfs_results(dataset_path, directed)
+    cu_values = gpubenchmark(cugraph.bfs, graph_like_obj, start=start_vertex)
+    assert compare_result(cu_values, nx_values)
+
+
+####################################
+
+
 # =============================================================================
-# Tests
+# tests
 # =============================================================================
 @pytest.mark.parametrize("cugraph_input_type", utils.CUGRAPH_INPUT_TYPES)
 def test_bfs(gpubenchmark, dataset_nxresults_startvertex_spc,
