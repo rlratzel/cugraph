@@ -14,6 +14,6 @@
 
 from cugraph.tests.testing_utils.fixtures import \
     (cudf_dataframe_from_dataset,
-     cugraph_obj_from_dataset,
-     cugraph_nx_obj_from_dataset,
+     cugraphobj_from_dataset,
+     cugraphobj_nxobj_from_dataset,
     )

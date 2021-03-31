@@ -13,6 +13,7 @@
 
 import pytest
 import networkx as nx
+import pandas as pd
 import cudf
 
 import cugraph
@@ -26,10 +27,18 @@ nx_cugraph_type_map = {cugraph.Graph : nx.Graph,
                        cugraph.DiGraph : nx.DiGraph,
                       }
 
-def read_csv_dataset_using(csv_reader, dataset_obj):
+# Create a list of pytest params using the datasets, using the pytest_marks attr
+# of the dataset obj to create a pytest.mark list for use in specifying subsets
+# of datasets with -m
+datasets_as_params_list = [pytest.param(ds, marks=[getattr(pytest.mark, m)
+                                                   for m in ds.pytest_marks])
+                           for ds in datasets]
+
+
+def call_csv_reader(csv_reader, dataset_obj):
     """
-    Returns a dataframe by calling csv_reader on the csv specified by
-    dataset_obj.
+    Returns a dataframe by calling a compatible csv_reader on the csv specified
+    by dataset_obj.
     """
     dtypes = {"0": dataset_obj.vertex_type,
               "1": dataset_obj.vertex_type,
@@ -39,7 +48,7 @@ def read_csv_dataset_using(csv_reader, dataset_obj):
         dtypes["weight"] = dataset_obj.weight_type
         names.append("weight")
 
-    print(f"\nREADING CSV {dataset_obj.path} USING {csv_reader}\n")
+    print(f"\nREADING CSV {dataset_obj.path} USING {csv_reader.__name__}\n")
     df = csv_reader(dataset_obj.path,
                     delimiter=" ",
                     dtype=dtypes,
@@ -53,19 +62,26 @@ def read_csv_dataset_using(csv_reader, dataset_obj):
 ## Fixtures
 
 @pytest.fixture(scope="package",
-                params=datasets,
+                params=datasets_as_params_list,
                 ids=[f"dataset={ds.rel_path}" for ds in datasets])
 def cudf_dataframe_from_dataset(request):
+    """
+    A tuple of (Dataset obj, DataFrame) for each dataset read in.
+    """
     dataset_obj = request.param
 
-    df = read_csv_dataset_using(cudf.read_csv, dataset_obj)
+    df = call_csv_reader(cudf.read_csv, dataset_obj)
     return (dataset_obj, df)
 
 
 @pytest.fixture(scope="package",
                 params=cugraph_graph_types,
                 ids=[f"type={gt.__name__}" for gt in cugraph_graph_types])
-def cugraph_obj_from_dataset(cudf_dataframe_from_dataset, request):
+def cugraphobj_from_dataset(cudf_dataframe_from_dataset, request):
+    """
+    A tuple of (Dataset obj, DataFrame, cugraph obj) for each
+    cugraph_graph_types, for each cudf_dataframe_from_dataset().
+    """
     (dataset_obj, df) = cudf_dataframe_from_dataset
     graph_type = request.param
 
@@ -82,21 +98,30 @@ def cugraph_obj_from_dataset(cudf_dataframe_from_dataset, request):
 @pytest.fixture(scope="package",
                 params=cugraph_graph_types,
                 ids=[f"type={gt.__name__}" for gt in cugraph_graph_types])
-def cugraph_nx_obj_from_dataset(cudf_dataframe_from_dataset, request):
+def cugraphobj_nxobj_from_dataset(cudf_dataframe_from_dataset, request):
+    """
+    A tuple of (Dataset obj, DataFrame, cugraph obj, NetworkX obj) for each
+    cugraph_graph_types, for each cudf_dataframe_from_dataset().
+
+    The NetworkX obj is chosen based on the cugraph obj, as defined by
+    nx_cugraph_type_map.
+    """
     (dataset_obj, df) = cudf_dataframe_from_dataset
     graph_type = request.param
 
     G = graph_type()
-    Gnx = nx_cugraph_type_map[graph_type]()
-    pdf = read_csv_dataset_using(pd.read_csv, dataset_obj)
+    Gnx_type = nx_cugraph_type_map[graph_type]
+    pdf = call_csv_reader(pd.read_csv, dataset_obj)
 
     if dataset_obj.weight_type is not None:
         G.from_cudf_edgelist(df, source="0", destination="1",
                              edge_attr="weight")
-        Gnx.from_pandas_edgelist(pdf, source="0", destination="1",
-                                 edge_attr="weight")
+        Gnx = nx.from_pandas_edgelist(pdf, source="0", target="1",
+                                      edge_attr="weight",
+                                      create_using=Gnx_type)
     else:
         G.from_cudf_edgelist(df, source="0", destination="1")
-        Gnx.from_pandas_edgelist(pdf, source="0", destination="1")
+        Gnx = nx.from_pandas_edgelist(pdf, source="0", target="1",
+                                      create_using=Gnx_type)
 
     return (dataset_obj, df, G, Gnx)
