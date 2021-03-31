@@ -15,7 +15,7 @@ import os
 from pathlib import Path
 import pytest
 
-# path is relative to RAPIDS_DATASET_ROOT_DIR if specified, else the default
+# path is relative to RAPIDS_DATASET_ROOT_DIR if set in the env, else the default
 # datasets dir
 # weighted=False and weight_type=float32 means a weight column is present in the
 # data, set to 1.0
@@ -39,10 +39,10 @@ dataset_metadata = [
 
 # This assumes this file resides in a specific place in the source dir
 # hierarchy under the cugraph root. If ever moved, this must be updated!
-__default_dataset_root_dir = \
+_default_dataset_root_dir = \
     Path(Path(__file__).resolve().parent / "../../../../datasets").resolve()
 rapids_dataset_root_dir = os.getenv("RAPIDS_DATASET_ROOT_DIR",
-                                    __default_dataset_root_dir)
+                                    _default_dataset_root_dir)
 
 
 class Dataset(dict):
@@ -82,6 +82,6 @@ class Dataset(dict):
         raise AttributeError
 
 
-__metadata_keys = dataset_metadata[0]
-__metadata = dataset_metadata[1:]
-datasets = [Dataset(zip(__metadata_keys, vals)) for vals in __metadata]
+_metadata_keys = dataset_metadata[0]
+_metadata = dataset_metadata[1:]
+datasets = [Dataset(zip(_metadata_keys, vals)) for vals in _metadata]
