@@ -58,9 +58,11 @@ class Dataset(dict):
         if invalid_keys:
             raise KeyError(invalid_keys.pop()) # any invalid key will do
 
+        keys = self.keys()
+
         # Ensure path is always an abs path to allow access from any CWD
         # Save rel_path to use for reporting the name to console
-        if "path" in self.keys():
+        if "path" in keys:
             p = Path(self["path"])
             self.rel_path = p
             if not p.is_absolute():
@@ -69,7 +71,7 @@ class Dataset(dict):
             self.rel_path = None
 
         # pytest_marks must be a list to be properly used in pytest.param()
-        if type(self["pytest_marks"]) != list:
+        if "pytest_marks" in keys and type(self["pytest_marks"]) != list:
             raise TypeError("pytest_marks for path "
                             f"{self['path']} must be a list")
 
@@ -79,7 +81,7 @@ class Dataset(dict):
         """
         if attr in self.valid_keys:
             return self.get(attr)
-        raise AttributeError
+        raise AttributeError(attr)
 
 
 _metadata_keys = dataset_metadata[0]
