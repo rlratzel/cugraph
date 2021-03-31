@@ -25,16 +25,16 @@ import pytest
 dataset_metadata = [
 ["path",                     "vertices", "edges",   "directed", "weighted", "self_loops", "isolated_vertices", "multi_edges", "vertex_type", "weight_type", "pytest_marks",],
 
-["karate.csv",               34,         156,       False,      False,      False,        False,               False,         "int32",       "float32",     "small"        ],
-["dolphins.csv",             62,         318,       False,      False,      False,        False,               False,         "int32",       "float32",     "small"        ],
-["netscience.csv",           1589,       5484,      False,      True,       False,        False,               False,         "int32",       "float32",     None           ],
-["email-Eu-core.csv",        1005,       25571,     True,       False,      False,        False,               False,         "int32",       "float32",     None           ],
-["karate_multi_edge.csv",    34,         160,       False,      False,      False,        False,               True,          "int32",       "float32",     None           ],
-["dolphins_multi_edge.csv",  62,         325,       False,      False,      False,        False,               True,          "int32",       "float32",     None           ],
-["karate_s_loop.csv",        34,         160,       False,      False,      True,         False,               False,         "int32",       "float32",     None           ],
-["dolphins_s_loop.csv",      62,         321,       False,      False,      True,         False,               False,         "int32",       "float32",     None           ],
-#["karate_mod.mtx",           37,         156,       False,      False,      False,        True,                False,         "int32",       None,          None           ],
-#["karate_str.mtx",           34,         156,       False,      True,       False,        False,               False,         "string",      "int32",       None           ],
+["karate.csv",               34,         156,       False,      False,      False,        False,               False,         "int32",       "float32",     ["small"]      ],
+["dolphins.csv",             62,         318,       False,      False,      False,        False,               False,         "int32",       "float32",     ["small"]      ],
+["netscience.csv",           1589,       5484,      False,      True,       False,        False,               False,         "int32",       "float32",     []             ],
+["email-Eu-core.csv",        1005,       25571,     True,       False,      False,        False,               False,         "int32",       "float32",     []             ],
+["karate_multi_edge.csv",    34,         160,       False,      False,      False,        False,               True,          "int32",       "float32",     []             ],
+["dolphins_multi_edge.csv",  62,         325,       False,      False,      False,        False,               True,          "int32",       "float32",     []             ],
+["karate_s_loop.csv",        34,         160,       False,      False,      True,         False,               False,         "int32",       "float32",     []             ],
+["dolphins_s_loop.csv",      62,         321,       False,      False,      True,         False,               False,         "int32",       "float32",     []             ],
+#["karate_mod.mtx",           37,         156,       False,      False,      False,        True,                False,         "int32",       None,          []             ],
+#["karate_str.mtx",           34,         156,       False,      True,       False,        False,               False,         "string",      "int32",       []             ],
 ]
 
 # This assumes this file resides in a specific place in the source dir
@@ -69,10 +69,9 @@ class Dataset(dict):
             self.rel_path = None
 
         # pytest_marks must be a list to be properly used in pytest.param()
-        pytest_marks = self.get("pytest_marks") or []
-        if pytest_marks:
-            pytest_marks = pytest_marks.split(",")
-        self["pytest_marks"] = pytest_marks
+        if type(self["pytest_marks"]) != list:
+            raise TypeError("pytest_marks for path "
+                            f"{self['path']} must be a list")
 
     def __getattr__(self, attr):
         """
