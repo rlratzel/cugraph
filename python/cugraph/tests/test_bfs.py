@@ -146,12 +146,12 @@ def _compare_bfs_with_spc(cugraph_df, nx_sp_counter):
 ## BFS-specific fixtures
 
 @pytest.fixture(scope="module")
-def cugraphobj_nxresults_startvertex(cugraphobj_nxobj_from_dataset):
+def cugraphobj_nxresults_startvertex(cugraph_nx_objs_from_dataset):
     """
     Returns the tuple of (cugraph obj, NetworkX BFS results, random startvertex
     used) for each item in cugraph_nx_obj_from_dataset.
     """
-    (dataset_obj, df, G, Gnx) = cugraphobj_nxobj_from_dataset
+    (dataset_obj, df, G, Gnx) = cugraph_nx_objs_from_dataset
 
     random.seed(_seed)
     start_vertex = random.sample(Gnx.nodes(), 1)[0]
@@ -161,12 +161,12 @@ def cugraphobj_nxresults_startvertex(cugraphobj_nxobj_from_dataset):
 
 
 @pytest.fixture(scope="module")
-def cugraphobj_nxresults_allstartvertices(cugraphobj_nxobj_from_dataset):
+def cugraphobj_nxresults_allstartvertices(cugraph_nx_objs_from_dataset):
     """
     Returns the tuple of (cugraph obj, NetworkX BFS all paths results, all start
     vertices) for each item in cugraph_nx_obj_from_dataset.
     """
-    (dataset_obj, df, G, Gnx) = cugraphobj_nxobj_from_dataset
+    (dataset_obj, df, G, Gnx) = cugraph_nx_objs_from_dataset
 
     start_vertices = [start_vertex for start_vertex in Gnx]
 

@@ -48,7 +48,7 @@ def call_csv_reader(csv_reader, dataset_obj):
         dtypes["weight"] = dataset_obj.weight_type
         names.append("weight")
 
-    print(f"\nREADING CSV {dataset_obj.path} USING {csv_reader.__name__}\n")
+    print(f"\nREADING CSV {dataset_obj.path} USING {csv_reader}")
     df = csv_reader(dataset_obj.path,
                     delimiter=" ",
                     dtype=dtypes,
@@ -61,12 +61,12 @@ def call_csv_reader(csv_reader, dataset_obj):
 ################################################################################
 ## Fixtures
 
-@pytest.fixture(scope="package",
+@pytest.fixture(scope="session",
                 params=datasets_as_params_list,
                 ids=[f"dataset={ds.rel_path}" for ds in datasets])
 def cudf_dataframe_from_dataset(request):
     """
-    A tuple of (Dataset obj, DataFrame) for each dataset read in.
+    A tuple of (Dataset obj, cudf DataFrame) for each dataset read in.
     """
     dataset_obj = request.param
 
@@ -74,13 +74,25 @@ def cudf_dataframe_from_dataset(request):
     return (dataset_obj, df)
 
 
-@pytest.fixture(scope="package",
+@pytest.fixture(scope="session")
+def cudf_pandas_dataframes_from_dataset(cudf_dataframe_from_dataset):
+    """
+    A tuple of (Dataset obj, cudf DataFrame, pandas DataFrame) for each
+    cudf_dataframe_from_dataset.
+    """
+    (dataset_obj, df) = cudf_dataframe_from_dataset
+
+    pdf = call_csv_reader(pd.read_csv, dataset_obj)
+    return (dataset_obj, df, pdf)
+
+
+@pytest.fixture(scope="session",
                 params=cugraph_graph_types,
                 ids=[f"type={gt.__name__}" for gt in cugraph_graph_types])
-def cugraphobj_from_dataset(cudf_dataframe_from_dataset, request):
+def cugraph_obj_from_dataset(cudf_dataframe_from_dataset, request):
     """
-    A tuple of (Dataset obj, DataFrame, cugraph obj) for each
-    cugraph_graph_types, for each cudf_dataframe_from_dataset().
+    A tuple of (Dataset obj, cudf DataFrame, cugraph obj) for each
+    cugraph_graph_types, for each cudf_dataframe_from_dataset.
     """
     (dataset_obj, df) = cudf_dataframe_from_dataset
     graph_type = request.param
@@ -95,23 +107,22 @@ def cugraphobj_from_dataset(cudf_dataframe_from_dataset, request):
     return (dataset_obj, df, G)
 
 
-@pytest.fixture(scope="package",
+@pytest.fixture(scope="session",
                 params=cugraph_graph_types,
                 ids=[f"type={gt.__name__}" for gt in cugraph_graph_types])
-def cugraphobj_nxobj_from_dataset(cudf_dataframe_from_dataset, request):
+def cugraph_nx_objs_from_dataset(cudf_pandas_dataframes_from_dataset, request):
     """
     A tuple of (Dataset obj, DataFrame, cugraph obj, NetworkX obj) for each
-    cugraph_graph_types, for each cudf_dataframe_from_dataset().
+    cugraph_graph_types, for each cudf_pandas_dataframes_from_dataset.
 
     The NetworkX obj is chosen based on the cugraph obj, as defined by
     nx_cugraph_type_map.
     """
-    (dataset_obj, df) = cudf_dataframe_from_dataset
+    (dataset_obj, df, pdf) = cudf_pandas_dataframes_from_dataset
     graph_type = request.param
 
     G = graph_type()
     Gnx_type = nx_cugraph_type_map[graph_type]
-    pdf = call_csv_reader(pd.read_csv, dataset_obj)
 
     if dataset_obj.weight_type is not None:
         G.from_cudf_edgelist(df, source="0", destination="1",
