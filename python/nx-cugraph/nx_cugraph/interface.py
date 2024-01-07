@@ -1,4 +1,4 @@
-# Copyright (c) 2023, NVIDIA CORPORATION.
+# Copyright (c) 2023-2024, NVIDIA CORPORATION.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -21,6 +21,15 @@ import nx_cugraph as nxcg
 
 
 class BackendInterface:
+    """
+    An instance of this class is used by the NetworkX dispatcher to call
+    functions provided by the 'cugraph' backend.
+
+    Methods corresponding to dispatchable NetworkX functions are added to this
+    class at import time by the 'networkx_algorithm' decorator in
+    utils.decorators.
+    """
+
     # Required conversions
     @staticmethod
     def convert_from_nx(graph, *args, edge_attrs=None, weight=None, **kwargs):
