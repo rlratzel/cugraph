@@ -781,6 +781,8 @@ ConfigureCTest(CAPI_EGONET_TEST c_api/egonet_test.c)
 ConfigureCTest(CAPI_TWO_HOP_NEIGHBORS_TEST c_api/two_hop_neighbors_test.c)
 ConfigureCTest(CAPI_K_TRUSS_TEST c_api/k_truss_test.c)
 
+ConfigureCTest(CAPI_LEGACY_SPECTRAL_REPRO c_api/legacy_spectral_repro.c)
+
 if (BUILD_CUGRAPH_MTMG_TESTS)
     ###################################################################################################
     # - MTMG tests -------------------------------------------------------------------------
