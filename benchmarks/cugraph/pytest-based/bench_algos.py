@@ -159,11 +159,12 @@ def reinitRMM(managed_mem, pool_alloc):
         pool_alloc != RMM_SETTINGS["pool_alloc"]
     ):
 
-        rmm.reinitialize(
-            managed_memory=managed_mem,
-            pool_allocator=pool_alloc,
-            initial_pool_size=2 << 27,
-        )
+        # rmm.reinitialize(
+        #    managed_memory=managed_mem,
+        #    pool_allocator=pool_alloc,
+        #    initial_pool_size=2 << 27,
+        # )
+        print("skipping reinitRMM")
         RMM_SETTINGS.update(managed_mem=managed_mem, pool_alloc=pool_alloc)
 
 

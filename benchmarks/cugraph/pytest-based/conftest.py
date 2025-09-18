@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023, NVIDIA CORPORATION.
+# Copyright (c) 2020-2025, NVIDIA CORPORATION.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -62,7 +62,6 @@ def pytest_sessionstart(session):
     # reinit multiple times anyway (hence the --allow-rmm-reinit flag).
     if session.config.getoption("allow_rmm_reinit") is False:
         currentMarkexpr = session.config.getoption("markexpr")
-
         if ("managedmem" in currentMarkexpr) or ("poolallocator" in currentMarkexpr):
             raise RuntimeError(
                 "managedmem and poolallocator markers cannot "
@@ -75,6 +74,45 @@ def pytest_sessionstart(session):
 
         session.config.option.markexpr = newMarkexpr
 
+    default = "new"
+    import rmm
+
+    match default:
+        case "current":
+            print("Using current default mr...")
+        case "new":
+            free_memory = rmm.mr.available_device_memory()[0]
+            free_memory = int(round(float(free_memory) * 0.80 / 256) * 256)
+            new_mr = rmm.mr.PrefetchResourceAdaptor(
+                rmm.mr.PoolMemoryResource(
+                    rmm.mr.ManagedMemoryResource(),
+                    initial_pool_size=free_memory,
+                )
+            )
+            rmm.mr.set_current_device_resource(new_mr)
+            print("Using Prefetched Managed Memory Resource...")
+        case _:
+            raise ValueError(f"Unknown default mr type: {default}")
+
+    """
+    A="cuda"
+    match A:
+        case "cuda":
+            dev_resource = rmm.mr.CudaMemoryResource()
+            rmm.mr.set_current_device_resource(dev_resource)
+            print("Using CUDA Memory Resource...")
+        case "managed":
+            managed_resource = rmm.mr.ManagedMemoryResource()
+            rmm.mr.set_current_device_resource(managed_resource)
+            print("Using Managed Memory Resource...")
+        case "prefetched":
+            upstream_mr = rmm.mr.ManagedMemoryResource()
+            prefetch_mr = rmm.mr.PrefetchResourceAdaptor(upstream_mr)
+            rmm.mr.set_current_device_resource(prefetch_mr)
+            print("Using Prefetched Managed Memory Resource...")
+        case _:
+            raise ValueError(f"Unknown RMM allocator type: {A}")
+    """
     # Set the value of the CLI options for RMAT here since any RmatDataset
     # objects must be instantiated prior to running test fixtures in order to
     # have their test ID generated properly.
